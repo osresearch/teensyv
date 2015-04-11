@@ -46,7 +46,7 @@ clock_loop(
 )
 {
 	// Draw all the digits around the outside
-	for (uint8_t th = 0 ; th < 24 ; th += 6)
+	for (uint8_t th = 0 ; th < 24 ; th += 2)
 	{
 		uint16_t h2 = th;
 		h2 = (h2 * 682) / 64;

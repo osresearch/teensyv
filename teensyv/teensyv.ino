@@ -29,6 +29,10 @@ void loop()
 			min = 0;
 			if (hour == 23)
 				hour = 0;
+			else
+				hour++;
+		} else {
+			min++;
 		}
 	} else {
 		sec++;
