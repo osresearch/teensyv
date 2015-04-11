@@ -1,0 +1,38 @@
+#!/usr/bin/perl
+# Draw a spinner on the vector scope
+use warnings;
+use strict;
+use Time::HiRes 'usleep';
+
+$|++;
+my $dt = 1e6 / 30;
+my $t = 0;
+my $points = 11;
+
+while(1)
+{
+	my $s;
+	$s .= chr(($points >> 8) & 0xFF);
+	$s .= chr(($points >> 0) & 0xFF);
+
+	my $old_x;
+	my $old_y;
+
+	for my $i (0..$points)
+	{
+		my $x = 127 * sin($t+2*3.14*$i/$points) + 128;
+		my $y = 127 * cos($t+2*3.14*$i/$points) + 128;
+
+		if ($i != 0)
+		{
+			$s .= chr($old_x) . chr($old_y) . chr($x) . chr($y);
+		}
+
+		$old_x = $x;
+		$old_y = $y;
+	}
+
+	syswrite STDOUT, $s;
+	usleep($dt);
+	$t += 0.01;
+}
