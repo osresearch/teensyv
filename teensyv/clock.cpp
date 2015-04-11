@@ -13,7 +13,7 @@ draw_hms(
 	const uint8_t cy,
 	const uint8_t h,
 	const uint8_t m,
-	const uint8_t s,
+	const uint8_t s
 )
 {
 	draw_char_big( 0+cx, cy, h / 10 + '0');
@@ -27,8 +27,8 @@ draw_hms(
 
 static void
 draw_str(
-	const uint8_t x,
-	const uint8_t y,
+	uint8_t x,
+	uint8_t y,
 	const char * str
 )
 {
@@ -90,6 +90,7 @@ clock_loop(
 	// seconds to "degrees" = 
 	{
 		uint16_t s2 = s;
+		uint16_t ms = 0;
 		s2 = (s2 * 1092 + ms) / 256;
 		uint8_t sx = sin_lookup(s2) * 6 / 8 + 128;
 		uint8_t sy = cos_lookup(s2) * 6 / 8 + 128;

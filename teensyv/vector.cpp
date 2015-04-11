@@ -150,12 +150,12 @@ line(
 		if (e2 > -dy)
 		{
 			err = err - dy;
-			PORTB = (x0 += sx);
+			output_x(x0 += sx);
 		}
 		if (e2 < dx)
 		{
 			err = err + dx;
-			PORTD = (y0 += sy);
+			output_y(y0 += sy);
 		}
 	}
 #else
