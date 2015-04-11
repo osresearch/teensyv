@@ -1,0 +1,169 @@
+#!/usr/bin/perl
+# Reduce the complexity of an OFF model by collapsing similar vertices
+use warnings;
+use strict;
+use Data::Dumper;
+
+# Merging and scaling parameters
+my $eps = 9;
+my $scale = 99;
+
+my @vertex;
+my %adj;
+
+
+chomp($_ = <>);
+die "Bad header: '$_'\n" unless $_ eq "OFF";
+
+chomp($_ = <>);
+my ($vertices, $faces, $edges) = split /\s+/;
+
+
+#
+# Read the vertices, merging them as we go
+#
+my $vertex_id = 0;
+
+print <<"";
+#include "coords.h"
+static const vertex_t vertices[] = {
+
+VERTEX:
+for my $i (0..$vertices-1)
+{
+	chomp($_ = <>);
+	my ($x,$y,$z) = split /\s+/;
+	for ($x,$y,$z)
+	{
+		$_ = int($_ * $scale + 0.5);
+		$_ = -128 if $_ < -128;
+		$_ = +127 if $_ > +127;
+	}
+
+	my $new_v = [$vertex_id++, $x,$y,$z];
+
+	# Make sure this one isn't to close to any others
+	for my $j (0..$i-1)
+	{
+		my $v = $vertex[$j];
+		my ($j1, $x1,$y1,$z1) = @$v;
+
+		my $dx = $x - $x1;
+		my $dy = $y - $y1;
+		my $dz = $z - $z1;
+		my $delta = sqrt($dx*$dx + $dy*$dy + $dz*$dz);
+
+		next if $delta > $eps;
+
+		# vertex i is too close to vertex j so we must merge it
+		# reduce the vertex id since we didn't use it
+		$vertex_id--;
+		$vertex[$i] = $v;
+		next VERTEX;
+	}
+
+	$vertex[$i] = $new_v;
+
+	printf "{ { %6d, %6d, %6d } }, // %d\n",
+		$scale/2 - $z,
+		$x - $scale/2,
+		$y,
+		$vertex_id
+}
+
+print <<"";
+};
+
+
+warn "$vertex_id vertices after merging eps=$eps (out of $vertices)\n";
+my %printed;
+my $edge_id = 0;
+
+print <<"";
+static const edge_t edges[] = {
+
+for my $i (1..$faces)
+{
+	chomp($_ = <>);
+	my ($c,@v) = split /\s+/;
+	my $last_v = shift @v;
+
+	# For each vertex listed on the face, 
+	# print an edge if we have not already printed one
+	# between these two vertices
+	for my $v_id (@v)
+	{
+		my $v1 = $vertex[$v_id][0];
+		my $v2 = $vertex[$last_v][0];
+
+		# Do not output any self-to-self edges
+		next if $v1 == $v2;
+
+		($v2,$v1) = ($v1,$v2) if $v1 > $v2;
+		next if $printed{$v1}{$v2}++;
+
+		printf "{ %4d, %4d },\n", $v1, $v2;
+		$last_v = $v_id;
+		$edge_id++;
+	}
+}
+
+print <<"";
+};
+
+
+warn "$edge_id edges after merging eps=$eps (out of $edges)\n";
+
+__END__
+
+# Walk the vertex array and collapse any that are close enough
+for my $i (0..$vertices-2)
+{
+	my ($i1, $x1,$y1,$z1) = @{$vertex[$i]};
+	next unless $i1 == $i; # has the vertex already been collapsed
+
+	for my $j ($i+1..$vertices-1)
+	{
+		my ($j1, $x2,$y2,$z2) = @{$vertex[$j]};
+		my $dx = $x1 - $x2;
+		my $dy = $y1 - $y2;
+		my $dz = $z1 - $z2;
+		my $delta = sqrt($dx*$dx + $dy*$dy + $dz*$dz);
+		next if $delta  > $eps;
+
+		# $i and $j are close enough; try to collapse them
+		#print "$i and $j\n";
+		combine_vertex($i, $j)
+	}
+}
+
+
+sub combine_vertex
+{
+	my ($i,$j) = @_;
+	$vertex[$j][0] = $i;
+
+	# Make all of the edges that connect from j connect
+	# to i instead
+	for my $a (keys %{ $adj{$j}})
+	{
+		delete $adj{$a}{$j};
+
+		$adj{$a}{$i}++;
+		$adj{$i}{$a}++;
+	}
+
+	delete $adj{$j};
+}
+
+#print Dumper(\%adj);
+my $out_index = 0;
+for my $i (0..$vertices-1)
+{
+	my ($i1, $x,$y,$z) = @{$vertex[$i]};
+	next if $i1 != $i;
+
+	print "$out_index: $x $y $z\n";
+	$out_index++;
+}
+
