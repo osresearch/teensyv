@@ -49,16 +49,12 @@ read_byte(void)
 
 	while(1)
 	{
-		if (Serial.available())
-		{
-			const int c = Serial.read();
-			if (c != -1)
-				return c;
-		}
+		const int c = Serial.read();
+		if (c != -1)
+			return c;
 
-		spin_count++;
-		GPIOD_PDOR = spin_count & 2 ? 255 : 0;
-		GPIOC_PDOR = spin_count & 1 ? 255 : 0;
+		while (!Serial.available())
+			;
 	}
 }
 
@@ -66,11 +62,17 @@ read_byte(void)
 void
 read_frame(void)
 {
+
 	point_count = read_byte();
 	point_count = point_count << 8 | read_byte();
 
 	for (unsigned i = 0 ; i < point_count ; i++)
 	{
+		{
+			GPIOD_PDOR = i & 1 ? 255 : 0;
+			GPIOC_PDOR = i & 2 ? 255 : 0;
+		}
+
 		uint8_t * const p = points[i];
 		p[0] = read_byte();
 		p[1] = read_byte();
