@@ -10,7 +10,7 @@
 #include <stdint.h>
 
 void
-vector_init(void);
+vector_setup(void);
 
 
 void

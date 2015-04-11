@@ -23,6 +23,10 @@
 
 #define CONFIG_TEENSY3
 
+#ifdef CONFIG_TEENSY3
+#include "core_pins.h"
+#endif
+
 
 static inline void
 output_x(
@@ -30,7 +34,7 @@ output_x(
 )
 {
 #ifdef CONFIG_TEENSY3
-	GPIOD_PDIR = x;
+	GPIOD_PDOR = x;
 #else
 	PORTB = x;
 #endif
@@ -43,7 +47,7 @@ output_y(
 )
 {
 #ifdef CONFIG_TEENSY3
-	GPIOC_PDIR = y;
+	GPIOC_PDOR = y;
 #else
 	PORTD = y;
 #endif
@@ -438,11 +442,11 @@ draw_char_rot(
 
 
 void
-vector_init(void)
+vector_setup(void)
 {
 #ifdef CONFIG_TEENSY3
 	// the pins are mapped oddly, so we have an array of them.
-	static const uint8_t pins = {
+	static const uint8_t pins[] = {
 		15, 22, 23, 9, 10, 13, 11, 12,	// Port C
 		2, 14, 7, 8, 6, 20, 21, 5,	// Port D
 	};

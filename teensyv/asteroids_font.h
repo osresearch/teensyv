@@ -12,7 +12,14 @@ typedef struct
 } asteroids_char_t;
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern const asteroids_char_t asteroids_font[];
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif
