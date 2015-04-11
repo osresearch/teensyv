@@ -6,7 +6,8 @@ extern void
 clock_loop(
 	const unsigned h,
 	const unsigned m,
-	const unsigned s
+	const unsigned s,
+	const unsigned ms
 );
 
 #endif

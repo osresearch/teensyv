@@ -22,6 +22,7 @@
 #include "memspaces.h"
 
 #define CONFIG_TEENSY3
+#define CONFIG_HERSHEY
 
 #ifdef CONFIG_TEENSY3
 #include "core_pins.h"
@@ -105,6 +106,7 @@ line(
 	int sx;
 	int sy;
 
+/*
 	if (x0 == x1)
 	{
 		if (y0 < y1)
@@ -122,6 +124,7 @@ line(
 			line_horiz(x1, y0, x0 - x1);
 		return;
 	}
+*/
 
 	if (x0 <= x1)
 	{
@@ -162,6 +165,7 @@ line(
 			output_y(y0 += sy);
 		}
 	}
+
 #else
 	uint8_t dx;
 	uint8_t dy;
@@ -304,13 +308,20 @@ _draw_char(
 
 	for (uint8_t i = 0 ; i < count ; i++)
 	{
+/*
 		const int8_t px = pgm_read_byte(&p->points[i*2+0]);
 		const int8_t py = pgm_read_byte(&p->points[i*2+1]);
-		if (px == -1 && py == -1)
+*/
+		const uint16_t combo = *(const uint16_t*)&p->points[i*2];
+
+		if (combo == 0xFFFF)
 		{
 			pen_down = 0;
 			continue;
 		}
+
+		const int8_t px = combo >> 0;
+		const int8_t py = combo >> 8;
 
 		const uint8_t nx = x + scaling(px, scale);
 		const uint8_t ny = y + scaling(py, scale);
