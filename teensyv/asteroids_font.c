@@ -4,10 +4,9 @@
  * http://www.edge-online.com/wp-content/uploads/edgeonline/oldfiles/images/feature_article/2009/05/asteroids2.jpg
  */
 
-#include <avr/io.h>
-#include <avr/pgmspace.h>
 #include <stdint.h>
-#include "asteroids-font.h"
+#include "memspaces.h"
+#include "asteroids_font.h"
 
 #define P(x,y)	((((x) & 0xF) << 4) | (((y) & 0xF) << 0))
 #define UP 0xFE

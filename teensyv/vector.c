@@ -16,21 +16,12 @@
 #endif
 
 #include "hershey.h"
-#include "asteroids-font.h"
+#include "asteroids_font.h"
 #include "vector.h"
 #include "sin_table.h"
+#include "memspaces.h"
 
 #define CONFIG_TEENSY3
-
-#ifdef CONFIG_TEENSY3
-static inline uint8_t
-pgm_read_byte(
-	const void * const p
-)
-{
-	return *(const uint8_t*) p;
-}
-#endif
 
 
 static inline void
