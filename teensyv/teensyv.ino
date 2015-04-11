@@ -1,3 +1,16 @@
+/** \file
+ * Vector display interface.
+ *
+ * Implements a simple command language to draw vectors on an
+ * oscilloscope.
+ *
+ * Format is 16-bits for the number of line segments,
+ * followed by 4-byte line segments (x1,y1,x2,y2).
+ *
+ * While the segments are being read the beam will be moved
+ * between the four corners of the scope to avoid a hot-spot.
+ *
+ */
 #include "vector.h"
 #include "clock.h"
 #include "sin_table.h"
@@ -25,43 +38,54 @@ static uint8_t sec;
 static uint8_t min;
 static uint8_t hour;
 
-static uint8_t serial_block()
+
+/** Blocking serial read.
+ * While waiting for bytes, move the beam around to avoid a hot spot
+ */
+static uint8_t
+read_byte(void)
 {
+	static uint8_t spin_count = 0;
+
 	while(1)
 	{
-		int c = Serial.read();
-		if (c == -1)
-			continue;
-		return c;
+		if (Serial.available())
+		{
+			const int c = Serial.read();
+			if (c != -1)
+				return c;
+		}
+
+		spin_count++;
+		GPIOD_PDOR = spin_count & 2 ? 255 : 0;
+		GPIOC_PDOR = spin_count & 1 ? 255 : 0;
 	}
 }
+
+
+void
+read_frame(void)
+{
+	point_count = read_byte();
+	point_count = point_count << 8 | read_byte();
+
+	for (unsigned i = 0 ; i < point_count ; i++)
+	{
+		uint8_t * const p = points[i];
+		p[0] = read_byte();
+		p[1] = read_byte();
+		p[2] = read_byte();
+		p[3] = read_byte();
+	}
+}
+
 
 void loop()
 {
 	static uint8_t timing_bit;
 	digitalWrite(TIMING_PIN, timing_bit ^= 1);
-	while (Serial.available())
-	{
-		uint8_t c = Serial.read();
-		if (c == 'E')
-		{
-			point_count = 0;
-			continue;
-		}
-
-		if (c == 'P')
-		{
-			uint8_t * const p = points[point_count];
-			p[0] = serial_block();
-			p[1] = serial_block();
-			p[2] = serial_block();
-			p[3] = serial_block();
-
-			if (point_count < MAX_POINTS-1)
-				point_count++;
-			continue;
-		}
-	}
+	if (Serial.available())
+		read_frame();
 
 #if 1
 	for (unsigned i = 0 ; i < point_count; i++)
