@@ -10,7 +10,6 @@ cube: $(SRCS)
 	$(CC) -std=c99 -g -O3 -Wall -o $@ $^
 
 
-
 teapot.h: teapot.off off-reduce
 	./off-reduce teapot.off > teapot.h
 

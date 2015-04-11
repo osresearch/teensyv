@@ -16,8 +16,8 @@ vertex_t;
 
 typedef struct
 {
-	uint8_t v0;
-	uint8_t v1;
+	uint16_t v0;
+	uint16_t v1;
 } __attribute__((__packed__))
 edge_t;
 

@@ -36,10 +36,10 @@ wireframe_draw(
 				new_p1->x, new_p1->y
 			);
 */
-		buf[2 + 4*i + 0] = new_p0->x;
-		buf[2 + 4*i + 1] = new_p0->y;
-		buf[2 + 4*i + 2] = new_p1->x;
-		buf[2 + 4*i + 3] = new_p1->y;
+		buf[2 + 4*i + 0] = 255 - new_p0->x;
+		buf[2 + 4*i + 1] = 255 - new_p0->y;
+		buf[2 + 4*i + 2] = 255 - new_p1->x;
+		buf[2 + 4*i + 3] = 255 - new_p1->y;
 	}
 
 	write(1, buf, sizeof(buf));
