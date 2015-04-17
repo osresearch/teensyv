@@ -19,12 +19,16 @@
 
 #define MAX_POINTS 1024
 static unsigned point_count = 4;
-static uint8_t points[MAX_POINTS][4] = {
+static unsigned rx_point_count = 4;
+static unsigned draw_buf = 0;
+static unsigned rx_buf = 1;
+static unsigned rx_bytes = 0;
+static uint8_t points[2][MAX_POINTS][4] =  { {
 	{ 0, 0, 255, 0 },
 	{ 255, 0, 255, 255 },
 	{ 255, 255, 0, 255 },
 	{ 0, 255, 0, 0 },
-};
+} };
 
 void setup()
 {
@@ -39,46 +43,39 @@ static uint8_t min;
 static uint8_t hour;
 
 
-/** Blocking serial read.
- * While waiting for bytes, move the beam around to avoid a hot spot
- */
-static uint8_t
-read_byte(void)
+int
+read_bytes(void)
 {
-	static uint8_t spin_count = 0;
-
-	while(1)
+	if (rx_bytes == 0)
 	{
-		const int c = Serial.read();
-		if (c != -1)
-			return c;
-
-		while (!Serial.available())
-			;
+		rx_point_count = Serial.read();
+		rx_bytes++;
+		return 0;
 	}
-}
-
-
-void
-read_frame(void)
-{
-
-	point_count = read_byte();
-	point_count = point_count << 8 | read_byte();
-
-	for (unsigned i = 0 ; i < point_count ; i++)
+	if (rx_bytes == 1)
 	{
-		{
-			GPIOD_PDOR = i & 1 ? 255 : 0;
-			GPIOC_PDOR = i & 2 ? 255 : 0;
-		}
-
-		uint8_t * const p = points[i];
-		p[0] = read_byte();
-		p[1] = read_byte();
-		p[2] = read_byte();
-		p[3] = read_byte();
+		rx_point_count = rx_point_count << 8 | Serial.read();
+		rx_bytes++;
+		return 0;
 	}
+
+	uint8_t * const p = points[rx_buf][(rx_bytes-2) / 4];
+	p[(rx_bytes-2) % 4] = Serial.read();
+	rx_bytes++;
+
+	if(rx_bytes < rx_point_count * 4 + 2)
+		return 0;
+
+	// end of frame
+	rx_bytes = 0;
+	point_count = rx_point_count;
+
+	// swap rx and draw buf
+	unsigned tmp = rx_buf;
+	rx_buf = draw_buf;
+	draw_buf = tmp;
+
+	return 1;
 }
 
 
@@ -86,14 +83,20 @@ void loop()
 {
 	static uint8_t timing_bit;
 	digitalWrite(TIMING_PIN, timing_bit ^= 1);
-	if (Serial.available())
-		read_frame();
-
 #if 1
 	for (unsigned i = 0 ; i < point_count; i++)
 	{
-		const uint8_t * const p = points[i];
+		const uint8_t * const p = points[draw_buf][i];
 		line(p[0], p[1], p[2], p[3]);
+
+		for (int j = 0 ; Serial.available() && j < 8 ; j++)
+		{
+			if (read_bytes())
+			{
+				i = 0;
+				break;
+			}
+		}
 	}
 #else
 	if (cs == 100)
