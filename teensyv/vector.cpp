@@ -147,12 +147,14 @@ line(
 	int err = dx - dy;
 
 	moveto(x0, y0);
+	delayMicroseconds(10);
 
 	while (1)
 	{
 		if (x0 == x1 && y0 == y1)
 			break;
 
+		delayMicroseconds(2);
 		int e2 = 2 * err;
 		if (e2 > -dy)
 		{
