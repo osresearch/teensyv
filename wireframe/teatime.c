@@ -56,14 +56,23 @@ void loop(void)
 }
 
 
-int main(void)
+int main(int argc, const char ** argv)
 {
+	int iters = 0;
+
+	if (argc > 1)
+		iters = atoi(argv[1]);
+
 	const unsigned count = ARRAY_COUNT(edges);
 	fprintf(stderr, "%d edges\n", count);
 
 	while(1)
 	{
 		loop();
-		usleep(10000);
+		fflush(stdout);
+		usleep(50000);
+
+		if(iters-- == 0)
+			break;
 	}
 }

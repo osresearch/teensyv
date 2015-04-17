@@ -9,7 +9,7 @@
 
 typedef struct
 {
-	int8_t x[3];
+	int16_t x[3];
 } __attribute__((__packed__))
 vertex_t;
 

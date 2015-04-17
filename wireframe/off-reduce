@@ -5,8 +5,8 @@ use strict;
 use Data::Dumper;
 
 # Merging and scaling parameters
-my $eps = 0;
-my $scale = 99;
+my $eps = 1;
+my $scale = 110;
 
 my @vertex;
 my %adj;
