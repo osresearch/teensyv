@@ -8,6 +8,31 @@
 #include "camera.h"
 #include "wireframe.h"
 
+#include <termios.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+
+int
+serial_open(
+	const char * const dev
+)
+{
+	const int fd = open(dev, O_RDWR | O_NONBLOCK | O_NOCTTY, 0666);
+	if (fd < 0)
+		return -1;
+
+	// Disable modem control signals
+	struct termios attr;
+	tcgetattr(fd, &attr);
+	attr.c_cflag |= CLOCAL | CREAD;
+	attr.c_oflag &= ~OPOST;
+	tcsetattr(fd, TCSANOW, &attr);
+
+	return fd;
+}
+
+
 static camera_t camera;
 static int8_t euler[3];
 
@@ -58,10 +83,18 @@ void loop(void)
 
 int main(int argc, const char ** argv)
 {
-	int iters = 0;
-
 	if (argc > 1)
-		iters = atoi(argv[1]);
+	{
+		// open a serial port
+		int fd = serial_open(argv[1]);
+		if (fd < 0)
+		{
+			perror(argv[1]);
+			return -1;
+		}
+
+		dup2(fd, 1);
+	}
 
 	const unsigned count = ARRAY_COUNT(edges);
 	fprintf(stderr, "%d edges\n", count);
@@ -69,10 +102,6 @@ int main(int argc, const char ** argv)
 	while(1)
 	{
 		loop();
-		fflush(stdout);
 		usleep(50000);
-
-		if(iters-- == 0)
-			break;
 	}
 }
